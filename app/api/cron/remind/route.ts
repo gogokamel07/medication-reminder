@@ -31,6 +31,11 @@ export async function GET(req: Request) {
   const byUser = new Map((settings || []).map((s: any) => [s.user_id, s]));
   let sent = 0;
   const dbg: any[] = [];
+  try {
+    const k = process.env.SUPABASE_SERVICE_ROLE_KEY || "";
+    const role = JSON.parse(Buffer.from(k.split(".")[1] || "", "base64").toString() || "{}");
+    dbg.push({ meds: (meds || []).length, host: (process.env.NEXT_PUBLIC_SUPABASE_URL || "").slice(8, 28), role: role.role, ref: role.ref, err: error ? error.message : null });
+  } catch (e: any) { dbg.push({ dbgerr: String(e.message) }); }
   const errors: string[] = [];
 
   for (const med of meds || []) {

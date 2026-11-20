@@ -1,7 +1,14 @@
 export type Medicine = {
   id: string; name: string; dose: string; times: string[];
   start_date: string; end_date: string | null;
+  type?: string; units_left?: number | null; units_per_dose?: number; refill_alerted?: boolean;
 };
+export const TYPES: Record<string, { icon: string; label: string; unit: string }> = {
+  pill: { icon: "💊", label: "Pills", unit: "pills" },
+  drink: { icon: "🥤", label: "Syrup / drink", unit: "doses" },
+  injection: { icon: "💉", label: "Injection", unit: "injections" },
+};
+export const iconFor = (t?: string) => (TYPES[t || "pill"] || TYPES.pill).icon;
 export type Log = { medicine_id: string; dose_date: string; dose_time: string };
 
 export const pad = (n: number) => String(n).padStart(2, "0");

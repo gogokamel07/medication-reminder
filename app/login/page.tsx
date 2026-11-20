@@ -27,7 +27,7 @@ export default function Login() {
 
   return (
     <main>
-      <div className="card hero"><h2>💊 Dawaa Reminder</h2><p>Never miss a dose. Get a friendly push every time.</p></div>
+      <div className="card hero"><h2><span className="ico ico-pill" aria-hidden="true" />Dawaa Reminder</h2><p>Never miss a dose. Get a friendly push every time.</p></div>
       <form className="card" onSubmit={submit}>
         <h3>{mode === "in" ? "Log in" : "Create account"}</h3>
         <label>Email</label>

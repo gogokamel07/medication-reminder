@@ -27,6 +27,7 @@ export default function Medicines() {
 
   async function save(e: React.FormEvent) {
     e.preventDefault(); setErr("");
+    if (!form.name.trim()) { setErr("Please type the medicine name."); return; }
     const row = {
       name: form.name.trim(), dose: form.dose.trim() || "1 pill",
       times: [...form.times].sort(), start_date: form.start_date, end_date: form.end_date || null,
@@ -99,4 +100,4 @@ export default function Medicines() {
       ))}
     </Shell>
   );
-                                       }
+}

@@ -1,3 +1,4 @@
+import { sendMail } from "@/lib/mail";
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { DEFAULT_MESSAGES, pick } from "@/lib/messages";
@@ -51,16 +52,7 @@ export async function GET(req: Request) {
       const { data: ru } = await db.auth.admin.getUserById(med.user_id);
       const to = ru?.user?.email;
       if (!cl && to) {
-        const rr = await fetch("https://api.resend.com/emails", {
-          method: "POST",
-          headers: { Authorization: `Bearer ${process.env.RESEND_API_KEY}`, "Content-Type": "application/json" },
-          body: JSON.stringify({
-            from: process.env.RESEND_FROM || "Dawaa Reminder <onboarding@resend.dev>",
-            to: [to],
-            subject: `🛒 ${med.name} runs out in about a day`,
-            html: `<div style="font-family:sans-serif;max-width:480px"><h2>Time to refill ${esc(med.name)}</h2><p>About ${med.units_left} left, around one day of doses. Get more today.</p></div>`,
-          }),
-        });
+        const rr = await sendMail({ to: to, subject: `🛒 ${med.name} runs out in about a day`, html: `<div style="font-family:sans-serif;max-width:480px"><h2>Time to refill ${esc(med.name)}</h2><p>About ${med.units_left} left, around one day of doses. Get more today.</p></div>` });
         if (rr.ok) sent++;
         else await db.from("medicines").update({ refill_alerted: false }).eq("id", med.id);
       }
@@ -87,22 +79,13 @@ export async function GET(req: Request) {
       const cheer = pick([...DEFAULT_MESSAGES, ...((custom || []).map((c: any) => c.text))]);
       const site = process.env.NEXT_PUBLIC_SITE_URL || "";
 
-      const res = await fetch("https://api.resend.com/emails", {
-        method: "POST",
-        headers: { Authorization: `Bearer ${process.env.RESEND_API_KEY}`, "Content-Type": "application/json" },
-        body: JSON.stringify({
-          from: process.env.RESEND_FROM || "Dawaa Reminder <onboarding@resend.dev>",
-          to: [email],
-          subject: `💊 Time for ${med.name} (${time})`,
-          html: `<div style="font-family:sans-serif;max-width:480px">
+      const res = await sendMail({ to: email, subject: `💊 Time for ${med.name} (${time})`, html: `<div style="font-family:sans-serif;max-width:480px">
             <h2>Time for ${esc(med.name)}</h2><p>${esc(med.dose)} at ${time}</p>
             <p style="font-size:18px">${esc(cheer)}</p>
             <p><a href="${site}/dashboard">Open the app and mark it as taken</a></p>
-            <p style="color:#888;font-size:12px">A helper only. Follow your doctor's instructions.</p></div>`,
-        }),
-      });
+            <p style="color:#888;font-size:12px">A helper only. Follow your doctor's instructions.</p></div>` });
       if (res.ok) sent++;
-      else { errors.push(`resend ${res.status}: ${(await res.text()).slice(0, 200)}`); await db.from("reminders_sent").delete().match({ medicine_id: med.id, dose_date: now.date, dose_time: time }); } // retry next run
+      else { errors.push(`mail ${res.status}: ${(await res.text()).slice(0, 200)}`); await db.from("reminders_sent").delete().match({ medicine_id: med.id, dose_date: now.date, dose_time: time }); } // retry next run
     }
   }
   return NextResponse.json({ ok: true, sent, errors });

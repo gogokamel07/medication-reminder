@@ -17,6 +17,7 @@ body { margin: 0; font-family: ui-sans-serif, system-ui, -apple-system, "Segoe U
 h2, h3 { letter-spacing: -0.01em; line-height: 1.25; }
 h2 { font-weight: 700; }
 h3 { font-size: var(--fs-lg); font-weight: 600; margin: var(--s5) var(--s1) var(--s3); }
+.card > h3:first-child { margin-top: 0; }
 p { margin: var(--s2) 0; }
 a { color: var(--primary); }
 /* icons: SVG masks, inherit text color, decorative (aria-hidden in markup) */

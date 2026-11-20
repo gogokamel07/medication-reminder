@@ -32,7 +32,7 @@ export default function History() {
   return (
     <Shell onReady={setUid}>
       <div className="card hero">
-        <h2 style={{ margin: 0 }}>🔥 Current streak: {streak(meds, logs)} days</h2>
+        <h2><span className="ico ico-flame" aria-hidden="true" />Current streak: {streak(meds, logs)} days</h2>
         <p>Last 30 days: {taken} taken, {total - taken} missed ({pct}% on time)</p>
       </div>
       {days.length === 0 && <p className="muted">No history yet.</p>}

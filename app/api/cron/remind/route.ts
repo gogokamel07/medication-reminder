@@ -3,6 +3,8 @@ import { createClient } from "@supabase/supabase-js";
 import { DEFAULT_MESSAGES, pick } from "@/lib/messages";
 
 export const dynamic = "force-dynamic";
+export const revalidate = 0;
+export const fetchCache = "force-no-store";
 
 const WINDOW_MIN = 10; // send reminders for doses due in the last 10 minutes (cron runs every 5)
 
@@ -23,7 +25,10 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
 
-  const db = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!);
+  const db = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!, {
+    auth: { persistSession: false },
+    global: { fetch: (u: any, i: any) => fetch(u, { ...i, cache: "no-store" }) },
+  });
   const { data: meds, error } = await db.from("medicines").select("*");
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 

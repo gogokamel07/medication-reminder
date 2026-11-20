@@ -30,6 +30,7 @@ export async function GET(req: Request) {
   const { data: settings } = await db.from("settings").select("*");
   const byUser = new Map((settings || []).map((s: any) => [s.user_id, s]));
   let sent = 0;
+  const errors: string[] = [];
 
   for (const med of meds || []) {
     const st: any = byUser.get(med.user_id) || { timezone: "Africa/Cairo", reminders_enabled: true };
@@ -71,7 +72,7 @@ export async function GET(req: Request) {
 
       // claim the slot first; if it already exists the insert fails and we skip (no double email)
       const { error: claim } = await db.from("reminders_sent").insert({ medicine_id: med.id, dose_date: now.date, dose_time: time });
-      if (claim) continue;
+      if (claim) { errors.push("claim: " + claim.message); continue; }
 
       const { data: u } = await db.auth.admin.getUserById(med.user_id);
       const email = u?.user?.email;
@@ -96,10 +97,10 @@ export async function GET(req: Request) {
         }),
       });
       if (res.ok) sent++;
-      else await db.from("reminders_sent").delete().match({ medicine_id: med.id, dose_date: now.date, dose_time: time }); // retry next run
+      else { errors.push(`resend ${res.status}: ${(await res.text()).slice(0, 200)}`); await db.from("reminders_sent").delete().match({ medicine_id: med.id, dose_date: now.date, dose_time: time }); } // retry next run
     }
   }
-  return NextResponse.json({ ok: true, sent });
+  return NextResponse.json({ ok: true, sent, errors });
 }
 
 function esc(s: string) {

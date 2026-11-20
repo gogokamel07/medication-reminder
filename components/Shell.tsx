@@ -5,10 +5,10 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 
 const tabs = [
-  { href: "/dashboard", label: "Today" },
-  { href: "/medicines", label: "Medicines" },
-  { href: "/history", label: "History" },
-  { href: "/messages", label: "Messages" },
+  { href: "/dashboard", label: "Today", icon: "today" },
+  { href: "/medicines", label: "Medicines", icon: "pill" },
+  { href: "/history", label: "History", icon: "history" },
+  { href: "/messages", label: "Messages", icon: "msg" },
 ];
 
 export default function Shell({ children, onReady }: { children: React.ReactNode; onReady?: (userId: string) => void }) {
@@ -28,11 +28,11 @@ export default function Shell({ children, onReady }: { children: React.ReactNode
   return (
     <>
       <header>
-        <strong>💊 Dawaa Reminder</strong>
+        <strong className="brand"><span className="logo"><span className="ico ico-pill" aria-hidden="true" /></span>Dawaa Reminder</strong>
         <button className="link" onClick={async () => { await supabase.auth.signOut(); router.replace("/login"); }}>Log out</button>
       </header>
       <nav>
-        {tabs.map(t => <Link key={t.href} href={t.href} className={path === t.href ? "active" : ""}>{t.label}</Link>)}
+        {tabs.map(t => <Link key={t.href} href={t.href} className={path === t.href ? "active" : ""} aria-current={path === t.href ? "page" : undefined}><span className={`ico ico-${t.icon}`} aria-hidden="true" />{t.label}</Link>)}
       </nav>
       <main>{children}</main>
       <footer className="muted">A helper only. It does not replace your doctor's instructions or an alarm.</footer>

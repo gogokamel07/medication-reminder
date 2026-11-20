@@ -53,3 +53,9 @@ create policy "own settings" on public.settings for all using (user_id = auth.ui
 create policy "own medicines" on public.medicines for all using (user_id = auth.uid()) with check (user_id = auth.uid());
 create policy "own logs" on public.dose_logs for all using (user_id = auth.uid()) with check (user_id = auth.uid());
 create policy "own messages" on public.messages for all using (user_id = auth.uid()) with check (user_id = auth.uid());
+
+-- v2: medicine type + refill tracking (safe to run more than once)
+alter table public.medicines add column if not exists type text not null default 'pill';
+alter table public.medicines add column if not exists units_left integer;
+alter table public.medicines add column if not exists units_per_dose integer not null default 1;
+alter table public.medicines add column if not exists refill_alerted boolean not null default false;

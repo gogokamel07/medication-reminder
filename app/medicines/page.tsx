@@ -2,9 +2,9 @@
 import { useCallback, useEffect, useState } from "react";
 import Shell from "@/components/Shell";
 import { supabase } from "@/lib/supabase";
-import { Medicine, todayStr } from "@/lib/doses";
+import { Medicine, todayStr, TYPES, iconFor } from "@/lib/doses";
 
-const empty = { name: "", dose: "1 pill", times: ["08:00"], start_date: todayStr(), end_date: "" };
+const empty = { name: "", dose: "1 pill", times: ["08:00"], start_date: todayStr(), end_date: "", type: "pill", units_left: "", units_per_dose: 1 };
 
 export default function Medicines() {
   const [uid, setUid] = useState("");
@@ -30,6 +30,10 @@ export default function Medicines() {
     const row = {
       name: form.name.trim(), dose: form.dose.trim() || "1 pill",
       times: [...form.times].sort(), start_date: form.start_date, end_date: form.end_date || null,
+      type: form.type || "pill",
+      units_left: form.units_left === "" || form.units_left == null ? null : Math.max(0, Number(form.units_left)),
+      units_per_dose: Math.max(1, Number(form.units_per_dose) || 1),
+      refill_alerted: false,
     };
     const { error } = editing
       ? await supabase.from("medicines").update(row).eq("id", editing)
@@ -47,6 +51,10 @@ export default function Medicines() {
     <Shell onReady={setUid}>
       <form className="card" onSubmit={save}>
         <h3>{editing ? "Edit medicine" : "Add a medicine"}</h3>
+        <label>Type</label>
+        <select value={form.type || "pill"} onChange={e => setForm({ ...form, type: e.target.value })}>
+          {Object.entries(TYPES).map(([k, v]) => <option key={k} value={k}>{v.icon} {v.label}</option>)}
+        </select>
         <label>Name</label>
         <input required value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} />
         <label>Dose (e.g. 1 pill, 5 ml)</label>
@@ -63,6 +71,10 @@ export default function Medicines() {
           ))}
         </div>
         <br />
+        <label>How many do you have now? (optional, we warn you 1 day before it runs out)</label>
+        <input type="number" min={0} value={form.units_left ?? ""} onChange={e => setForm({ ...form, units_left: e.target.value })} />
+        <label>Units used per dose</label>
+        <input type="number" min={1} value={form.units_per_dose ?? 1} onChange={e => setForm({ ...form, units_per_dose: e.target.value })} />
         <label>Start date</label>
         <input type="date" required value={form.start_date} onChange={e => setForm({ ...form, start_date: e.target.value })} />
         <label>End date (leave empty if ongoing)</label>
@@ -76,14 +88,15 @@ export default function Medicines() {
       {meds.length === 0 && <p className="muted">Nothing yet.</p>}
       {meds.map(m => (
         <div className="card row" key={m.id}>
-          <div><strong>{m.name}</strong> <span className="muted">({m.dose})</span><br />
-            <span className="muted">{m.times.join(", ")} · {m.start_date} → {m.end_date || "ongoing"}</span></div>
+          <div><span style={{ fontSize: 22 }}>{iconFor(m.type)}</span> <strong>{m.name}</strong> <span className="muted">({m.dose})</span><br />
+            <span className="muted">{m.times.join(", ")} · {m.start_date} → {m.end_date || "ongoing"}</span>
+            {m.units_left != null && <><br /><span className="muted">{m.units_left} left</span></>}</div>
           <div>
-            <button className="secondary" onClick={() => { setEditing(m.id); setForm({ ...m, end_date: m.end_date || "" }); window.scrollTo(0, 0); }}>Edit</button>{" "}
+            <button className="secondary" onClick={() => { setEditing(m.id); setForm({ ...m, end_date: m.end_date || "", type: m.type || "pill", units_left: m.units_left ?? "", units_per_dose: m.units_per_dose ?? 1 }); window.scrollTo(0, 0); }}>Edit</button>{" "}
             <button className="danger" onClick={() => remove(m.id)}>Delete</button>
           </div>
         </div>
       ))}
     </Shell>
   );
-        }
+                                       }

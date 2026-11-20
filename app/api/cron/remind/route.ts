@@ -88,6 +88,7 @@ export async function GET(req: Request) {
       else { errors.push(`mail ${res.status}: ${(await res.text()).slice(0, 200)}`); await db.from("reminders_sent").delete().match({ medicine_id: med.id, dose_date: now.date, dose_time: time }); } // retry next run
     }
   }
+  if (errors.length) console.error("cron errors", JSON.stringify(errors));
   return NextResponse.json({ ok: true, sent, errors });
 }
 

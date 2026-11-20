@@ -38,6 +38,28 @@ export async function GET(req: Request) {
     try { now = localNow(st.timezone); } catch { now = localNow("Africa/Cairo"); }
     if (med.start_date > now.date || (med.end_date && med.end_date < now.date)) continue;
 
+    // refill warning: one day (or less) of supply left
+    const perDay = (med.units_per_dose || 1) * (med.times as string[]).length;
+    if (med.units_left != null && !med.refill_alerted && med.units_left <= perDay) {
+      const { error: cl } = await db.from("medicines").update({ refill_alerted: true }).eq("id", med.id).eq("refill_alerted", false);
+      const { data: ru } = await db.auth.admin.getUserById(med.user_id);
+      const to = ru?.user?.email;
+      if (!cl && to) {
+        const rr = await fetch("https://api.resend.com/emails", {
+          method: "POST",
+          headers: { Authorization: `Bearer ${process.env.RESEND_API_KEY}`, "Content-Type": "application/json" },
+          body: JSON.stringify({
+            from: process.env.RESEND_FROM || "Dawaa Reminder <onboarding@resend.dev>",
+            to: [to],
+            subject: `🛒 ${med.name} runs out in about a day`,
+            html: `<div style="font-family:sans-serif;max-width:480px"><h2>Time to refill ${esc(med.name)}</h2><p>About ${med.units_left} left, around one day of doses. Get more today.</p></div>`,
+          }),
+        });
+        if (rr.ok) sent++;
+        else await db.from("medicines").update({ refill_alerted: false }).eq("id", med.id);
+      }
+    }
+
     for (const time of med.times as string[]) {
       const [h, m] = time.split(":").map(Number);
       const diff = now.minutes - (h * 60 + m);
@@ -82,4 +104,4 @@ export async function GET(req: Request) {
 
 function esc(s: string) {
   return String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]!));
-  }
+}

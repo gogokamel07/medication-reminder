@@ -30,6 +30,7 @@ export async function GET(req: Request) {
   const { data: settings } = await db.from("settings").select("*");
   const byUser = new Map((settings || []).map((s: any) => [s.user_id, s]));
   let sent = 0;
+  const dbg: any[] = [];
   const errors: string[] = [];
 
   for (const med of meds || []) {
@@ -37,6 +38,7 @@ export async function GET(req: Request) {
     if (!st.reminders_enabled) continue;
     let now;
     try { now = localNow(st.timezone); } catch { now = localNow("Africa/Cairo"); }
+    dbg.push({ n: med.name, tz: st.timezone, en: st.reminders_enabled, d: now.date, m: now.minutes, t: med.times, s: med.start_date });
     if (med.start_date > now.date || (med.end_date && med.end_date < now.date)) continue;
 
     // refill warning: one day (or less) of supply left
@@ -100,7 +102,7 @@ export async function GET(req: Request) {
       else { errors.push(`resend ${res.status}: ${(await res.text()).slice(0, 200)}`); await db.from("reminders_sent").delete().match({ medicine_id: med.id, dose_date: now.date, dose_time: time }); } // retry next run
     }
   }
-  return NextResponse.json({ ok: true, sent, errors });
+  return NextResponse.json({ ok: true, sent, errors, dbg });
 }
 
 function esc(s: string) {

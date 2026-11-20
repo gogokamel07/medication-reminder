@@ -61,9 +61,10 @@ button:disabled { opacity: .5; cursor: not-allowed; }
 .err { color: #b91c1c; font-size: var(--fs-sm); } .ok { color: var(--ok); }
 .times { display: flex; gap: var(--s2); flex-wrap: wrap; }
 .times input { width: auto; margin: 0; }
-.dose { display: flex; align-items: center; gap: var(--s3); flex-wrap: nowrap; }
-.dose-time { display: flex; flex-direction: column; align-items: flex-start; gap: var(--s1); min-width: 64px; font-size: var(--fs-lg); font-weight: 700; }
-.dose-main { flex: 1; min-width: 0; }
+.dose { display: flex; align-items: center; gap: var(--s3); flex-wrap: wrap; }
+.dose-time { display: flex; flex-direction: column; align-items: flex-start; gap: var(--s1); min-width: 80px; font-size: var(--fs-lg); font-weight: 700; }
+.dose-main { flex: 1 1 100px; min-width: 0; }
+@media (max-width: 380px) { .dose > button { flex: 1 1 100%; } }
 .dose-name { display: flex; align-items: center; gap: var(--s2); font-weight: 600; overflow-wrap: anywhere; }
 .med-ico { color: var(--primary); }
 .empty { display: flex; flex-direction: column; align-items: center; text-align: center; gap: var(--s2); padding: var(--s6) var(--s4); }

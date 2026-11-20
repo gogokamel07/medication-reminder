@@ -2,7 +2,7 @@
 import { useCallback, useEffect, useState } from "react";
 import Shell from "@/components/Shell";
 import { supabase } from "@/lib/supabase";
-import { Medicine, Log, dosesForDate, todayStr, streak } from "@/lib/doses";
+import { Medicine, Log, dosesForDate, todayStr, streak, iconFor } from "@/lib/doses";
 import { DEFAULT_MESSAGES, pick } from "@/lib/messages";
 
 export default function Dashboard() {
@@ -39,6 +39,11 @@ export default function Dashboard() {
   async function mark(d: (typeof doses)[number], on: boolean) {
     if (on) await supabase.from("dose_logs").insert({ medicine_id: d.med.id, dose_date: date, dose_time: d.time });
     else await supabase.from("dose_logs").delete().match({ medicine_id: d.med.id, dose_date: date, dose_time: d.time });
+    if (d.med.units_left != null) {
+      const step = d.med.units_per_dose || 1;
+      const next = on ? Math.max(0, d.med.units_left - step) : d.med.units_left + step;
+      await supabase.from("medicines").update({ units_left: next, refill_alerted: false }).eq("id", d.med.id);
+    }
     load(uid);
   }
 
@@ -52,7 +57,7 @@ export default function Dashboard() {
       {doses.length === 0 && <p className="muted">No doses today. Add a medicine in the Medicines tab.</p>}
       {doses.map(d => (
         <div className="card row" key={d.med.id + d.time}>
-          <div><strong>{d.time}</strong> &nbsp; {d.med.name}<br /><span className="muted">{d.med.dose}</span></div>
+          <div><strong>{d.time}</strong> &nbsp; <span style={{ fontSize: 22 }}>{iconFor(d.med.type)}</span> {d.med.name}<br /><span className="muted">{d.med.dose}{d.med.units_left != null ? ` · ${d.med.units_left} left` : ""}</span></div>
           <div>
             <span className={`badge ${d.status}`}>{d.status}</span>{" "}
             {d.status === "taken"

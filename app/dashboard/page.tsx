@@ -1,5 +1,6 @@
 "use client";
 import { useCallback, useEffect, useState } from "react";
+import Link from "next/link";
 import Shell from "@/components/Shell";
 import { supabase } from "@/lib/supabase";
 import { Medicine, Log, dosesForDate, todayStr, streak, iconFor } from "@/lib/doses";
@@ -51,19 +52,27 @@ export default function Dashboard() {
     <Shell onReady={setUid}>
       <div className="card hero">
         <p style={{ margin: 0 }}>{cheer}</p>
-        <h2 style={{ marginBottom: 0 }}>🔥 {s} day streak</h2>
+        <h2><span className="ico ico-flame" aria-hidden="true" />{s} day streak</h2>
       </div>
       <h3>Today: {taken}/{doses.length} doses taken</h3>
-      {doses.length === 0 && <p className="muted">No doses today. Add a medicine in the Medicines tab.</p>}
+      {doses.length === 0 && (
+        <div className="card empty">
+          <span className="ico ico-pill big" aria-hidden="true" />
+          <strong>No doses today</strong>
+          <p className="muted">Add your first medicine and we will remind you by email.</p>
+          <Link href="/medicines" className="btn">Add a medicine</Link>
+        </div>
+      )}
       {doses.map(d => (
-        <div className="card row" key={d.med.id + d.time}>
-          <div><strong>{d.time}</strong> &nbsp; <span style={{ fontSize: 22 }}>{iconFor(d.med.type)}</span> {d.med.name}<br /><span className="muted">{d.med.dose}{d.med.units_left != null ? ` · ${d.med.units_left} left` : ""}</span></div>
-          <div>
-            <span className={`badge ${d.status}`}>{d.status}</span>{" "}
-            {d.status === "taken"
-              ? <button className="secondary" onClick={() => mark(d, false)}>Undo</button>
-              : <button onClick={() => mark(d, true)}>Taken ✓</button>}
+        <div className="card dose" key={d.med.id + d.time}>
+          <div className="dose-time">{d.time}<span className={`badge ${d.status}`}>{d.status}</span></div>
+          <div className="dose-main">
+            <div className="dose-name">{iconFor(d.med.type)}{d.med.name}</div>
+            <div className="muted small">{d.med.dose}{d.med.units_left != null ? ` · ${d.med.units_left} left` : ""}</div>
           </div>
+          {d.status === "taken"
+            ? <button className="secondary" aria-label={`Undo ${d.med.name} at ${d.time}`} onClick={() => mark(d, false)}>Undo</button>
+            : <button aria-label={`Mark ${d.med.name} at ${d.time} as taken`} onClick={() => mark(d, true)}><span className="ico ico-check" aria-hidden="true" />Taken</button>}
         </div>
       ))}
     </Shell>
